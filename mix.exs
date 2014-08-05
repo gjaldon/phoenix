@@ -22,7 +22,7 @@ defmodule Phoenix.Mixfile do
   def application do
     [
       mod: { Phoenix, [] },
-      applications: [:cowboy, :plug]
+      applications: [:cowboy, :plug, :logger]
     ]
   end
 
