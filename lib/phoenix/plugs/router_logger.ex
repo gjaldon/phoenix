@@ -10,11 +10,16 @@ defmodule Phoenix.Plugs.RouterLogger do
 
   def init(opts), do: opts
 
-  def call(conn, level) do
-    Logger.debug """ 
-    Processing by #{controller_module(conn)}.#{action_name(conn)}
-        Accept: #{response_content_type(conn)}
-        Paramets: #{inspect conn.params}
-    """
+  def call(conn, _level) do
+    Plug.Conn.register_before_send(conn, fn (conn) -> 
+      content_type = conn.private[:phoenix_content_type] || nil
+      Logger.debug """ 
+      Processing by #{controller_module(conn)}.#{action_name(conn)}
+        Accept: #{content_type}
+        Parameters: #{inspect conn.params}
+      """
+      conn
+    end)
   end
+
 end

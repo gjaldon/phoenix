@@ -13,8 +13,8 @@ defmodule Phoenix.Mixfile do
         links: [github: "https://github.com/phoenixframework/phoenix"]
       ],
       description: """
-      Elixir Web Framework targeting full-featured, fault tolerant applications
-      with realtime functionality
+        Elixir Web Framework targeting full-featured, fault tolerant applications
+        with realtime functionality
       """
     ]
   end
@@ -22,7 +22,7 @@ defmodule Phoenix.Mixfile do
   def application do
     [
       mod: { Phoenix, [] },
-      applications: [:cowboy, :plug, :logger]
+      applications: [:cowboy, :plug]
     ]
   end
 
@@ -38,6 +38,6 @@ defmodule Phoenix.Mixfile do
 
   defp deps(_) do
     deps(:prod) ++
-      [ {:ex_doc, github: "elixir-lang/ex_doc", only: [:docs]} ]
+    [ {:ex_doc, github: "elixir-lang/ex_doc", only: [:docs]} ]
   end
 end

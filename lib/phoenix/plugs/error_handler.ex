@@ -2,6 +2,7 @@ defmodule Phoenix.Plugs.ErrorHandler do
   @behaviour Plug.Wrapper
   alias Phoenix.Config
   alias Phoenix.Controller
+  require Logger
 
   def init(opts), do: opts
 
@@ -11,6 +12,7 @@ defmodule Phoenix.Plugs.ErrorHandler do
     catch
       :throw, {:halt, conn} -> conn
       _kind, error ->
+        Logger.error(error.message)
         if Config.router(module, [:consider_all_requests_local]) do
           Controller.Action.error_with_trace(conn, error)
         else
