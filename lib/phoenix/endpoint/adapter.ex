@@ -33,11 +33,11 @@ defmodule Phoenix.Endpoint.Adapter do
      ],
 
      # Runtime config
-     url: [host: "localhost"],
+     cache_static_lookup: false,
      http: false,
      https: false,
      secret_key_base: nil,
-     static: [root: "/priv/static", route: "/", cache_static_lookup: true]]
+     url: [host: "localhost"]]
   end
 
   defp render_errors(module) do
@@ -49,6 +49,9 @@ defmodule Phoenix.Endpoint.Adapter do
 
   @doc """
   Builds the endpoint url from its configuration.
+
+  The result is wrapped in a `{:cache, value}` tuple so
+  the Phoenix.Config layer knows how to cache it.
   """
   def url(endpoint) do
     {scheme, port} =
@@ -66,35 +69,39 @@ defmodule Phoenix.Endpoint.Adapter do
     host   = url[:host]
     port   = to_string(url[:port] || port)
 
-    case {scheme, port} do
-      {"https", "443"} -> "https://" <> host
-      {"http", "80"}   -> "http://" <> host
-      {_, _}           -> scheme <> "://" <> host <> ":" <> port
-    end
+    {:cache,
+      case {scheme, port} do
+        {"https", "443"} -> "https://" <> host
+        {"http", "80"}   -> "http://" <> host
+        {_, _}           -> scheme <> "://" <> host <> ":" <> port
+      end}
   end
 
   @doc """
   Returns the static path of a file in the static root directory.
-  When file exists, it includes a timestamp. When it doesn't exist, just
-  the static path is returned.
-  """
-  def static_path(endpoint, path) do
-    config = endpoint.config(:static)
-    static_root = Keyword.get(config, :root)
-    file_path = Application.app_dir(endpoint.config(:otp_app), static_root)
-                |> Path.join(path)
-    route = Keyword.get(config, :route)
 
-    case File.stat(file_path) do
+  When file exists, it includes a timestamp. When it doesn't exist,
+  just the static path is returned.
+
+  The result is wrapped in a `{:cache | :stale, value}` tuple so
+  the Phoenix.Config layer knows how to cache it.
+  """
+  def static_path(endpoint, "/" <> _ = path) do
+    file = Application.app_dir(endpoint.config(:otp_app), Path.join("priv/static", path))
+
+    case File.stat(file) do
       {:ok, %File.Stat{mtime: mtime, type: type}}
           when type != :directory and is_tuple(mtime) ->
-        seconds = :calendar.datetime_to_gregorian_seconds(mtime)
-        route = Keyword.get(config, :route)
-        path = Plug.Router.Utils.split(path) |> Enum.join("/")
-        Path.join(route, [path, ??, to_string(seconds)])
+        key = if endpoint.config(:cache_static_lookup), do: :cache, else: :stale
+        sec = :calendar.datetime_to_gregorian_seconds(mtime)
+        {key, path <> "?" <> Integer.to_string(sec)}
       _ ->
-        Path.join(route, path)
+        {:stale, path}
     end
+  end
+
+  def static_path(endpoint, path) when is_binary(path) do
+    raise ArgumentError, "static_path/2 expects a path starting with / as argument"
   end
 
   ## Adapter specific
