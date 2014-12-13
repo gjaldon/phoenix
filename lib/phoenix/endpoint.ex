@@ -209,6 +209,21 @@ defmodule Phoenix.Endpoint do
           :__phoenix_url_helper__,
           &Phoenix.Endpoint.Adapter.url/1) <> path
       end
+
+      @doc """
+      Generates a route to a static file based on the `:static` configuration
+      for the endpoint.
+      """
+      def static_path(path) do
+        path = "/" <> (Plug.Router.Utils.split(path) |> Enum.join("/"))
+        if config(:static)[:cache_static_lookup] do
+          Phoenix.Config.cache(__MODULE__,
+            {:__phoenix_static__, path},
+            &Phoenix.Endpoint.Adapter.static_path(&1, path))
+        else
+          Phoenix.Endpoint.Adapter.static_path(__MODULE__, path)
+        end
+      end
     end
   end
 
