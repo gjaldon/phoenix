@@ -169,6 +169,7 @@ defmodule Phoenix.Endpoint.Adapter do
 
     case {scheme, port} do
       {"https", "443"} -> "https://" <> host
+      {"https", "80"} -> "https://" <> host
       {"http", "80"}   -> "http://" <> host
       {_, _}           -> scheme <> "://" <> host <> ":" <> port
     end
